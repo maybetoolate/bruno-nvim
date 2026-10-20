@@ -48,13 +48,18 @@ With `lazy.nvim`:
 
 ```lua
 {
-  dir = "/path/to/bruno-nvim",
+  "maybetoolate/bruno-nvim",
   name = "bruno-nvim",
   ft = { "bruno" },
   cmd = { "Bruno", "BrunoOpen", "BrunoRun", "BrunoEnv", "BrunoPeek" },
+  -- Load for YAML requests too, so keymaps attach automatically.
+  event = { "BufReadPre *.yml", "BufReadPre *.yaml" },
   opts = {},
 }
 ```
+
+Then run `:Lazy sync`. Opening a request or using any `:Bruno*` command loads
+the plugin.
 
 Or with `vim.pack` / `packadd`, put the repository on `runtimepath` and call:
 

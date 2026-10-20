@@ -43,6 +43,22 @@ such as snacks.nvim that overrides it is used automatically.
 3. SETUP                                                 *bruno-nvim-setup*
 
                                                       *bruno-nvim.setup()*
+Install with lazy.nvim:
+
+>lua
+  {
+    "maybetoolate/bruno-nvim",
+    name = "bruno-nvim",
+    ft = { "bruno" },
+    cmd = { "Bruno", "BrunoOpen", "BrunoRun", "BrunoEnv", "BrunoPeek" },
+    -- Load for YAML requests too, so keymaps attach automatically.
+    event = { "BufReadPre *.yml", "BufReadPre *.yaml" },
+    opts = {},
+  }
+<
+
+Then run `:Lazy sync`.
+
 Call |bruno-nvim.setup()| to configure the plugin. All options are optional.
 
 >lua
