@@ -183,8 +183,8 @@ function M.help()
     ("   %-18s copy as curl"):format(keys.copy_curl),
     "",
     " Response window",
-    "   q close   <localleader>p pretty   <localleader>H headers",
-    "   <localleader>y copy body   <localleader>s save body",
+    "   q close   <leader>p pretty   <leader>H headers",
+    "   <leader>y copy body   <leader>s save body",
   }
 
   util.float({

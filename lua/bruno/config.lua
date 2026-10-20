@@ -10,12 +10,12 @@ M.defaults = {
   env = nil,
 
   keymaps = {
-    run = "<localleader>r",
-    peek = "<localleader>p",
-    env = "<localleader>e",
-    vars = "<localleader>v",
-    history = "<localleader>h",
-    copy_curl = "<localleader>c",
+    run = "<leader>r",
+    peek = "<leader>p",
+    env = "<leader>e",
+    vars = "<leader>v",
+    history = "<leader>h",
+    copy_curl = "<leader>c",
   },
 
   curl = {

@@ -66,12 +66,12 @@ Call |bruno-nvim.setup()| to configure the plugin. All options are optional.
     collection = nil,        -- discover from buffer/cwd when nil
     env = nil,               -- persisted/default environment when nil
     keymaps = {
-      run = "<localleader>r",
-      peek = "<localleader>p",
-      env = "<localleader>e",
-      vars = "<localleader>v",
-      history = "<localleader>h",
-      copy_curl = "<localleader>c",
+      run = "<leader>r",
+      peek = "<leader>p",
+      env = "<leader>e",
+      vars = "<leader>v",
+      history = "<leader>h",
+      copy_curl = "<leader>c",
     },
     curl = {
       bin = "curl",
@@ -161,12 +161,12 @@ Set a keymap to an empty string to disable it.
 5. KEYMAPS                                           *bruno-nvim-keymaps*
 
 Request buffers:
-  <localleader>r        Run request
-  <localleader>p        Preview resolved request
-  <localleader>e        Select environment
-  <localleader>v        Show variables
-  <localleader>h        Response history
-  <localleader>c        Copy as curl
+  <leader>r        Run request
+  <leader>p        Preview resolved request
+  <leader>e        Select environment
+  <leader>v        Show variables
+  <leader>h        Response history
+  <leader>c        Copy as curl
 
 Sidebar:
   <CR>                  Open request or toggle folder
@@ -181,10 +181,10 @@ Sidebar:
 
 Response window:
   q                     Close
-  <localleader>p        Toggle pretty-printing
-  <localleader>H        Toggle headers
-  <localleader>y        Copy body
-  <localleader>s        Save body to a file
+  <leader>p        Toggle pretty-printing
+  <leader>H        Toggle headers
+  <leader>y        Copy body
+  <leader>s        Save body to a file
 
 ==============================================================================
 6. VARIABLES                                       *bruno-nvim-variables*
