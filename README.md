@@ -76,7 +76,7 @@ require("bruno").setup()
 
 If the current file is inside a collection, `:Bruno` finds the collection root
 automatically. Open a request from the sidebar with `<CR>`, then press
-`<leader>r` to send it.
+`<leader>ar` to send it.
 
 Useful first commands:
 
@@ -103,12 +103,12 @@ Request buffers (YAML or `.bru` inside a collection):
 
 | Key | Action |
 | --- | --- |
-| `<leader>r` | Run request |
-| `<leader>p` | Preview resolved request |
-| `<leader>e` | Select environment |
-| `<leader>v` | Show variables |
-| `<leader>h` | Response history |
-| `<leader>c` | Copy as curl |
+| `<leader>ar` | Run request |
+| `<leader>ap` | Preview resolved request |
+| `<leader>ae` | Select environment |
+| `<leader>av` | Show variables |
+| `<leader>ah` | Response history |
+| `<leader>ac` | Copy as curl |
 
 Sidebar:
 
@@ -129,10 +129,10 @@ Response window:
 | Key | Action |
 | --- | --- |
 | `q` | Close |
-| `<leader>p` | Toggle pretty-print |
-| `<leader>H` | Toggle headers |
-| `<leader>y` | Copy body |
-| `<leader>s` | Save body to a file |
+| `<leader>ap` | Toggle pretty-print |
+| `<leader>aH` | Toggle headers |
+| `<leader>ay` | Copy body |
+| `<leader>as` | Save body to a file |
 
 ## Configuration
 
@@ -146,12 +146,12 @@ require("bruno").setup({
   env = nil,
 
   keymaps = {
-    run = "<leader>r",
-    peek = "<leader>p",
-    env = "<leader>e",
-    vars = "<leader>v",
-    history = "<leader>h",
-    copy_curl = "<leader>c",
+    run = "<leader>ar",
+    peek = "<leader>ap",
+    env = "<leader>ae",
+    vars = "<leader>av",
+    history = "<leader>ah",
+    copy_curl = "<leader>ac",
   },
 
   curl = {
