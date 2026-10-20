@@ -275,8 +275,15 @@ req.setHeader("X-Debug", "1")
 test("status is 200", function () {
   expect(res.status).to.equal(200)
   expect(res.body.id).to.be.a("string")
+  expect(res.getStatus()).to.equal(200) // accessor form also works
 })
 ```
+
+Both property access (`res.status`, `res.body`, `res.headers`) and Bruno's
+accessor methods (`res.getStatus()`, `res.getBody()`, `res.getHeaders()`,
+`res.getHeader(name)`, `res.getResponseTime()`, `res.getSize()`,
+`res.getUrl()`) are available. Requests expose `req.getUrl/getMethod/
+getHeaders/getHeader/getBody` and matching setters.
 
 Supported globals: `bru`, `req`, `res`, `expect`, `test`, `console`,
 `require`, `process.env`, `Buffer`, `URL`, `URLSearchParams`, `atob`, `btoa`.

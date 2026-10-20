@@ -222,9 +222,12 @@ Scripts run in a `node` subprocess. The sandbox exposes:
   `bru`        setVar, getVar, deleteVar, setEnvVar, getEnvVar, deleteEnvVar,
                setCollectionVar, getCollectionVar, setNextRequest,
                getNextRequest, sleep, getSecretVar, interpolate
-  `req`        url, method, headers, body and setUrl/setMethod/setHeader/
-               getHeader/setBody/getBody/disableHeader
+  `req`        url, method, headers, body plus getUrl/getMethod/getHeaders/
+               getHeader/getBody and the matching setters, deleteHeader,
+               disableHeader
   `res`        status, statusText, headers, body, responseTime, size, url
+               plus getStatus/getStatusText/getHeaders/getHeader/getBody/
+               getResponseTime/getSize/getUrl
   `expect`     Chai-style assertions
   `test`       Register a test
   `console`    log, info, warn, error, debug

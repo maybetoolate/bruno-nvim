@@ -123,6 +123,42 @@ bru.setVar("status", res.status);
       t.eq(result.logs[1].message, 'hello {"a":1}')
     end)
 
+    t.it("exposes Bruno response accessors", function()
+      local result = scripts.run(
+        {
+          {
+            type = "after-response",
+            code = [[
+test("accessors", function () {
+  expect(res.getStatus()).to.equal(200);
+  expect(res.getBody().id).to.equal("abc");
+  expect(res.getHeaders()["content-type"]).to.contain("json");
+  expect(res.getResponseTime()).to.equal(5);
+  expect(res.getSize()).to.equal(11);
+  expect(res.getUrl()).to.equal("http://x");
+});
+]],
+          },
+        },
+        payload({
+          response = {
+            status = 200,
+            statusText = "OK",
+            headers = { ["content-type"] = "application/json" },
+            body = '{"id":"abc"}',
+            contentType = "application/json",
+            responseTime = 5,
+            size = 11,
+            url = "http://x",
+          },
+        }),
+        { cwd = "." }
+      )
+      t.ok(result.ok, result.error)
+      t.eq(#result.tests, 1)
+      t.eq(result.tests[1].passed, true, result.tests[1].error)
+    end)
+
     t.it("mutates the request", function()
       local result = scripts.run({
         {

@@ -68,6 +68,7 @@ function makeExpect(actual, negated) {
     }
   }
   api.contains = api.include
+  api.contain = api.include
   api.match = (re) => assert(new RegExp(re).test(String(actual)), `expected ${actual} to match ${re}`)
   api.a = (type) => {
     const actualType = actual === null ? 'null' : Array.isArray(actual) ? 'array' : typeof actual
@@ -211,21 +212,58 @@ async function main() {
     getMethod() { return result.request.method },
     setHeader(name, value) { result.request.headers[name] = value; this.headers = result.request.headers },
     getHeader(name) { return result.request.headers[name] },
+    getHeaders() { return result.request.headers },
+    setHeaders(headers) {
+      result.request.headers = asObject(headers)
+      this.headers = result.request.headers
+    },
+    deleteHeader(name) { delete result.request.headers[name]; this.headers = result.request.headers },
     setBody(value) { result.request.body = value; this.body = value },
     getBody() { return result.request.body },
     disableHeader(name) { delete result.request.headers[name]; this.headers = result.request.headers },
   }
 
   const response = context.response
+  const responseHeaders = response ? asObject(response.headers) : {}
+  const responseBody = response ? parseBody(response.body, response.contentType) : undefined
   const res = response
     ? {
         status: response.status,
         statusText: response.statusText || response.reason || '',
-        headers: asObject(response.headers),
-        body: parseBody(response.body, response.contentType),
+        headers: responseHeaders,
+        body: responseBody,
         responseTime: response.responseTime || 0,
         size: response.size || 0,
         url: response.url || '',
+        // Bruno's object accessors, as used by existing collection scripts.
+        getStatus() {
+          return this.status
+        },
+        getStatusText() {
+          return this.statusText
+        },
+        getHeaders() {
+          return this.headers
+        },
+        getHeader(name) {
+          const key = String(name).toLowerCase()
+          for (const header of Object.keys(this.headers)) {
+            if (header.toLowerCase() === key) return this.headers[header]
+          }
+          return undefined
+        },
+        getBody() {
+          return this.body
+        },
+        getResponseTime() {
+          return this.responseTime
+        },
+        getSize() {
+          return this.size
+        },
+        getUrl() {
+          return this.url
+        },
       }
     : {}
 
