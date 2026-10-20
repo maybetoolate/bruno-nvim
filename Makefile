@@ -6,7 +6,7 @@ test:
 	$(NVIM) --headless --clean -l tests/run.lua
 
 fmt:
-	stylua lua tests
+	stylua lua tests plugin
 
 lint:
-	stylua --check lua tests
+	stylua --check lua tests plugin

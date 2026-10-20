@@ -96,6 +96,10 @@ vim.api.nvim_create_autocmd("BufWritePost", {
     if path == "" then
       return
     end
+    local request = require("bruno.ui.request")
+    if request.is_request(args.buf) then
+      request.attach(args.buf)
+    end
     require("bruno.collection").invalidate(path)
     local tree = require("bruno.ui.tree")
     if tree.is_open() then
