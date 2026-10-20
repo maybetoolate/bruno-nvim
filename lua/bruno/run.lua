@@ -323,7 +323,7 @@ function M.prepare(req, opts)
     settings = eff.settings,
   }
 
-  auth.apply(auth.resolve(eff), spec, ctx)
+  auth.apply(auth.resolve(eff), spec, ctx, { dry_run = opts.dry_run })
 
   if spec.url == "" then
     return nil, "request URL is empty"

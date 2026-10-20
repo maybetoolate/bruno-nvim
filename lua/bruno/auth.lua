@@ -41,7 +41,7 @@ local function form_encode(value)
   return vim.uri_encode(value or "", "rfc3986")
 end
 
-local function fetch_oauth2(auth, ctx)
+local function fetch_oauth2(auth, ctx, dry_run)
   local ok_config = config.get()
   if not ok_config.oauth.cache then
     oauth_cache = {}
@@ -58,6 +58,11 @@ local function fetch_oauth2(auth, ctx)
   local cached = oauth_cache[cache_key]
   if cached and cached.expires_at > os.time() + 30 then
     return cached.token, cached.token_type
+  end
+
+  if dry_run then
+    env.warn(ctx, "oauth2: access token will be fetched when the request runs")
+    return nil
   end
 
   local token_url = env.interpolate(auth.accessTokenUrl or "", ctx)
@@ -155,7 +160,12 @@ end
 --- @param spec table
 --- @param ctx table
 --- @return boolean applied
-function M.apply(auth, spec, ctx)
+--- @param auth table|string|nil
+--- @param spec table
+--- @param ctx table
+--- @param opts table|nil { dry_run = boolean }
+--- @return boolean applied
+function M.apply(auth, spec, ctx, opts)
   spec.headers = spec.headers or {}
   spec.curl_args = spec.curl_args or {}
 
@@ -200,7 +210,7 @@ function M.apply(auth, spec, ctx)
     spec.curl_args[#spec.curl_args + 1] = username .. ":" .. password
     return true
   elseif kind == "oauth2" then
-    local token, token_type = fetch_oauth2(auth, ctx)
+    local token, token_type = fetch_oauth2(auth, ctx, opts and opts.dry_run)
     if not token then
       return false
     end

@@ -112,5 +112,27 @@ return function(t)
       end
       t.eq(urls, 1)
     end)
+
+    t.it("does not fetch oauth2 tokens in dry runs", function()
+      local original = vim.system
+      local called = false
+      vim.system = function()
+        called = true
+        error("dry runs must not call curl")
+      end
+      local s = spec()
+      local ctx = context()
+      local ok = auth.apply({
+        type = "oauth2",
+        flow = "client_credentials",
+        accessTokenUrl = "https://auth.test/preview",
+        credentials = { clientId = "preview", clientSecret = "secret" },
+      }, s, ctx, { dry_run = true })
+      vim.system = original
+
+      t.not_ok(ok)
+      t.not_ok(called)
+      t.contains(ctx.warnings, "oauth2: access token will be fetched when the request runs")
+    end)
   end)
 end
