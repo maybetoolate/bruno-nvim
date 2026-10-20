@@ -194,8 +194,6 @@ require("bruno").setup({
   oauth = {
     cache = true,
   },
-
-  picker = "auto",          -- reserved; uses vim.ui.select
 })
 ```
 
@@ -245,6 +243,11 @@ Variables are resolved from highest to lowest priority:
 4. Active environment
 5. Collection variables
 6. Process environment
+
+`bru.deleteVar` and `bru.setCollectionVar` changes from scripts are
+session-scoped too: deleting a runtime variable removes it from resolution,
+and collection-variable updates apply to the rest of the session without
+touching files on disk.
 
 Unknown variables are kept as `{{name}}` by default and reported in the
 preview and response warnings. `variables.missing = "empty"` replaces them

@@ -59,8 +59,9 @@ command("BrunoReload", function()
 end, { desc = "Reload Bruno collections" })
 
 command("BrunoCancel", function()
-  require("bruno.run").cancel_all()
-  require("bruno.ui.util").notify("in-flight requests cancelled", vim.log.levels.WARN)
+  if not require("bruno.run").cancel_all() then
+    require("bruno.ui.util").notify("nothing to cancel", vim.log.levels.INFO)
+  end
 end, { desc = "Cancel in-flight Bruno requests" })
 
 command("BrunoHelp", function()

@@ -17,8 +17,11 @@ local uv = vim.uv or vim.loop
 
 local runtime_vars = {}
 local env_overrides = {}
+local collection_runtime = {}
 local active_jobs = {}
 local last_responses = {}
+
+local merge_script_vars -- forward declaration; defined below
 
 local function normalize_path(path)
   return vim.fs.normalize(path or "")
@@ -39,6 +42,13 @@ function M.env_overrides(root)
   root = normalize_path(root)
   env_overrides[root] = env_overrides[root] or {}
   return env_overrides[root]
+end
+
+--- Session-scoped collection variables (`bru.setCollectionVar`).
+function M.collection_runtime(root)
+  root = normalize_path(root)
+  collection_runtime[root] = collection_runtime[root] or {}
+  return collection_runtime[root]
 end
 
 --- Set a variable.
@@ -70,6 +80,7 @@ end
 function M.reset_runtime(root)
   runtime_vars[normalize_path(root)] = {}
   env_overrides[normalize_path(root)] = {}
+  collection_runtime[normalize_path(root)] = {}
 end
 
 function M.last_response(path)
@@ -236,6 +247,7 @@ function M.prepare(req, opts)
     env = opts.env,
     runtime = M.runtime(coll.root),
     env_overrides = M.env_overrides(coll.root),
+    collection_vars = M.collection_runtime(coll.root),
   })
 
   local eff = {
@@ -272,19 +284,7 @@ function M.prepare(req, opts)
     }, { cwd = coll.root })
 
     if result.ok then
-      for key, value in pairs(result.vars or {}) do
-        M.runtime(coll.root)[key] = value
-        ctx.runtime[key] = value
-      end
-      for key, value in pairs(result.env_vars or {}) do
-        if value == vim.NIL then
-          M.env_overrides(coll.root)[key] = nil
-          ctx.env_vars[key] = nil
-        else
-          M.env_overrides(coll.root)[key] = value
-          ctx.env_vars[key] = value
-        end
-      end
+      merge_script_vars(coll, result, ctx)
       apply_script_request(eff, result.request)
       ctx.script_logs = result.logs
     else
@@ -332,13 +332,18 @@ function M.prepare(req, opts)
   return { spec = spec, ctx = ctx, req = eff, coll = coll }
 end
 
-local function merge_runtime(coll, result, ctx)
+merge_script_vars = function(coll, result, ctx)
   if not result then
     return
   end
   for key, value in pairs(result.vars or {}) do
     M.runtime(coll.root)[key] = value
     ctx.runtime[key] = value
+  end
+  -- `bru.deleteVar` removals reported by the runner as a list of names.
+  for _, name in ipairs(result.deleted_vars or {}) do
+    M.runtime(coll.root)[name] = nil
+    ctx.runtime[name] = nil
   end
   for key, value in pairs(result.env_vars or {}) do
     if value == vim.NIL then
@@ -349,6 +354,21 @@ local function merge_runtime(coll, result, ctx)
       ctx.env_vars[key] = value
     end
   end
+  local col = M.collection_runtime(coll.root)
+  for key, value in pairs(result.collection_vars or {}) do
+    col[key] = value
+  end
+  -- Refresh the collection scope so later interpolation of the same request
+  -- (headers, body) sees the new values without rebuilding the context.
+  for _, scope in ipairs(ctx.scopes or {}) do
+    if scope.name == "collection" then
+      scope.vars = vim.tbl_extend("force", scope.vars, col)
+    end
+  end
+end
+
+local function merge_runtime(coll, result, ctx)
+  merge_script_vars(coll, result, ctx)
 end
 
 local function response_scripts(prepared, response)
@@ -527,11 +547,16 @@ function M.cancel(path)
   end
 end
 
+--- Cancel every in-flight request.
+--- @return boolean whether anything was cancelled
 function M.cancel_all()
+  local cancelled = false
   for key, job in pairs(active_jobs) do
     job.cancel()
     active_jobs[key] = nil
+    cancelled = true
   end
+  return cancelled
 end
 
 --- Render the request exactly as it will be sent (no scripts, no network).
@@ -567,6 +592,7 @@ function M.list_variables(coll, req, opts)
     env = opts.env,
     runtime = M.runtime(coll.root),
     env_overrides = M.env_overrides(coll.root),
+    collection_vars = M.collection_runtime(coll.root),
   })
 
   local seen = {}

@@ -58,6 +58,18 @@ return function(t)
       t.eq(url.build(req, context({})), "https://api.test/users?q=a,b")
     end)
 
+    t.it("replaces path parameters whose values percent-encode with %", function()
+      local req = {
+        url = "https://api.test/invoices/:id/{code}",
+        params = {
+          { name = "id", value = "100 %20", type = "path" },
+          { name = "code", value = "a,b", type = "path" },
+        },
+        settings = {},
+      }
+      t.eq(url.build(req, context({})), "https://api.test/invoices/100%20%2520/a%2Cb")
+    end)
+
     t.it("replaces {name} path placeholders", function()
       local req = {
         url = "https://api.test/users/{id}",

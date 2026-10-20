@@ -132,6 +132,7 @@ function M.run(scripts, payload, opts)
     ok = decoded.ok ~= false,
     error = decoded.error ~= vim.NIL and decoded.error or nil,
     vars = decoded.vars or {},
+    deleted_vars = decoded.deletedVars or {},
     env_vars = decoded.envVars or {},
     collection_vars = decoded.collectionVars or {},
     request = decoded.request,

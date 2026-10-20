@@ -179,7 +179,7 @@ local function rerun()
     return
   end
   local run = require("bruno.run")
-  run.run(S.req, {
+  local run_opts = {
     on_start = function(prepared)
       util.winbar(S.win, {
         { " " .. prepared.spec.method .. " ", util.method_hl(prepared.spec.method) },
@@ -187,7 +187,18 @@ local function rerun()
         { "  sending… ", "BrunoStatus3xx" },
       })
     end,
-  })
+  }
+  -- Re-resolve from the request's own path so reruns pick up edits and do not
+  -- reapply script mutations from the previous run (cumulative `setUrl`, …).
+  if S.req.path and S.req.path ~= "" then
+    local buf = vim.fn.bufnr(S.req.path, false)
+    run_opts.path = S.req.path
+    if buf ~= -1 then
+      run_opts.buffer = buf
+    end
+    return run.run_target(run_opts)
+  end
+  run.run(S.req, run_opts)
 end
 
 local function copy_body()
@@ -202,6 +213,8 @@ local function save_body()
   if not S.resp then
     return
   end
+  -- Capture the body now: a new response may arrive while the prompt is open.
+  local body = S.resp.body or ""
   local name = (S.req and S.req.name or "response"):gsub("[^%w%-_%.]+", "-"):lower()
   local default = vim.fs.joinpath(vim.fn.getcwd(), name .. ".json")
   vim.ui.input({ prompt = "Save response body to: ", default = default }, function(path)
@@ -213,7 +226,7 @@ local function save_body()
       util.notify("cannot write " .. path, vim.log.levels.ERROR)
       return
     end
-    fd:write(S.resp.body or "")
+    fd:write(body)
     fd:close()
     util.notify("saved " .. path, vim.log.levels.INFO)
   end)

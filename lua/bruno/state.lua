@@ -34,7 +34,6 @@ function M.load()
   cache = cache or {}
   cache.collections = cache.collections or {}
   cache.history = cache.history or {}
-  cache.oauth = cache.oauth or {}
   return cache
 end
 
@@ -123,16 +122,6 @@ end
 
 function M.clear_history()
   M.load().history = {}
-  M.save()
-end
-
-function M.oauth_get(key)
-  return M.load().oauth[key]
-end
-
-function M.oauth_set(key, value)
-  local state = M.load()
-  state.oauth[key] = value
   M.save()
 end
 

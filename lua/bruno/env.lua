@@ -299,7 +299,7 @@ end
 --- Build an interpolation context for a request.
 --- @param coll table
 --- @param req table
---- @param opts table|nil { env = string, runtime = table }
+--- @param opts table|nil { env = string, runtime = table, env_overrides = table, collection_vars = table }
 --- @return table context
 function M.context(coll, req, opts)
   opts = opts or {}
@@ -338,7 +338,11 @@ function M.context(coll, req, opts)
   end
 
   push("environment", env_vars)
-  push("collection", var_list_to_map(coll.defaults and coll.defaults.variables))
+  local collection_vars = var_list_to_map(coll.defaults and coll.defaults.variables)
+  if opts.collection_vars then
+    collection_vars = vim.tbl_extend("force", collection_vars, opts.collection_vars)
+  end
+  push("collection", collection_vars)
   push("process", vim.fn.environ())
 
   return {

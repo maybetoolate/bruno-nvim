@@ -159,6 +159,32 @@ return function(t)
       t.eq(body.greeting, "hello")
     end)
 
+    t.it("merges script variable deletions and collection vars", function()
+      run.set_var(coll.root, "tempVar", "about-to-vanish")
+      local req = vim.deepcopy(request("users/get-user.yml"))
+      req.headers = vim.list_extend(vim.deepcopy(req.headers or {}), {
+        { name = "X-Runtime", value = "{{tempVar}}" },
+      })
+      req.scripts = {
+        { type = "before-request", code = 'bru.deleteVar("tempVar"); bru.setCollectionVar("region", "eu");' },
+      }
+      run.collection_runtime(coll.root).region = nil
+
+      local prepared = run.prepare(req, { env = "Local" })
+      t.ok(prepared, "should prepare")
+      local marker
+      for _, header in ipairs(prepared.spec.headers) do
+        if header.name == "X-Runtime" then
+          marker = header.value
+        end
+      end
+      -- The runtime variable was deleted by the script, so it stays unresolved.
+      t.eq(marker, "{{tempVar}}")
+      t.contains(prepared.ctx.warnings, "missing variable {{tempVar}}")
+      -- `bru.setCollectionVar` merges into the session collection variables.
+      t.eq(run.collection_runtime(coll.root).region, "eu")
+    end)
+
     t.it("applies api key auth to the query string", function()
       local prepared = run.prepare(request("auth-apikey.yml"), { env = "Local" })
       t.eq(prepared.spec.url, host .. "/secure?api_key=test-token")

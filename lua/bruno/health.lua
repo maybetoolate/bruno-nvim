@@ -32,7 +32,13 @@ function M.check()
   local curl = conf.curl.bin
   if vim.fn.executable(curl) == 1 then
     local version = vim.fn.system({ curl, "--version" })
-    ok(("curl found: %s"):format((version or ""):match("^[^\n]*") or curl))
+    local text = (version or ""):match("^[^\n]*") or curl
+    ok(("curl found: %s"):format(text))
+    -- `--write-out %{json}` (timing/size metadata) needs curl >= 7.75.
+    local major, minor = text:match("^curl%s+(%d+)%.(%d+)")
+    if major and (tonumber(major) < 7 or (tonumber(major) == 7 and tonumber(minor) < 75)) then
+      warn("curl < 7.75: response timing/size metadata is unavailable; received data still works")
+    end
   else
     error(("curl executable not found (%q); requests cannot be sent"):format(curl))
   end

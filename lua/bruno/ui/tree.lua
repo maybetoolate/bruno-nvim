@@ -170,7 +170,7 @@ local function open_node(node)
   else
     vim.cmd("vsplit")
   end
-  vim.cmd("edit " .. vim.fn.fnameescape(node.path))
+  vim.cmd("hide edit " .. vim.fn.fnameescape(node.path))
   require("bruno.ui.request").attach(vim.api.nvim_get_current_buf())
 end
 
@@ -369,7 +369,7 @@ function M.open_path(path, coll)
     vim.cmd("vsplit")
   end
 
-  vim.cmd("edit " .. vim.fn.fnameescape(path))
+  vim.cmd("hide edit " .. vim.fn.fnameescape(path))
   require("bruno.ui.request").attach(vim.api.nvim_get_current_buf())
 end
 

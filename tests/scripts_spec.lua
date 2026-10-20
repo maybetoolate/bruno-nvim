@@ -96,6 +96,26 @@ bru.setVar("status", res.status);
       t.eq(result.vars.status, 200)
     end)
 
+    t.it("reports deleted runtime variables", function()
+      local result = scripts.run({
+        {
+          type = "before-request",
+          code = 'bru.deleteVar("existing"); bru.setVar("other", "1");',
+        },
+      }, payload(), { cwd = "." })
+      t.ok(result.ok, result.error)
+      t.eq(result.deleted_vars[1], "existing")
+      t.eq(result.vars.other, "1")
+    end)
+
+    t.it("collects collection variable updates", function()
+      local result = scripts.run({
+        { type = "before-request", code = 'bru.setCollectionVar("region", "eu");' },
+      }, payload(), { cwd = "." })
+      t.ok(result.ok, result.error)
+      t.eq(result.collection_vars.region, "eu")
+    end)
+
     t.it("captures console output", function()
       local result = scripts.run({
         { type = "before-request", code = 'console.log("hello", { a: 1 });' },

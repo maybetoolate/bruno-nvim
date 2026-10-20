@@ -24,8 +24,14 @@ local function apply_path_params(url, params, ctx, encode_enabled)
     if param.type == "path" and not param.disabled and param.name ~= "" then
       local value = encode(env.interpolate(param.value or "", ctx), encode_enabled)
       local name = escape_pattern(param.name)
-      url = url:gsub(":" .. name .. "%f[%W]", value)
-      url = url:gsub("{" .. name .. "}", value)
+      -- Use a function replacement so percent-encoded values (`%20`, `%25`, …)
+      -- are not interpreted as gsub capture references.
+      url = url:gsub(":" .. name .. "%f[%W]", function()
+        return value
+      end)
+      url = url:gsub("{" .. name .. "}", function()
+        return value
+      end)
     end
   end
   return url

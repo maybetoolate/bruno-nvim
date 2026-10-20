@@ -66,9 +66,6 @@ M.defaults = {
     --- Reuse fetched OAuth2 access tokens until they expire.
     cache = true,
   },
-
-  --- "auto" uses snacks.nvim when available and `vim.ui.select` otherwise.
-  picker = "auto",
 }
 
 local options

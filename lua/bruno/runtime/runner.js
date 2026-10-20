@@ -146,6 +146,7 @@ async function main() {
     tests: [],
     logs: [],
     nextRequest: null,
+    deletedVars: [],
     secrets: context.secrets || [],
   }
   result.request.headers = asObject(result.request.headers)
@@ -155,6 +156,7 @@ async function main() {
   const pendingTests = []
   const envVarChanges = {}
   let currentTest = null
+  const deletedVars = []
 
   const consoleProxy = {
     log: (...args) => logs.push({ level: 'log', message: args.map(formatLog).join(' ') }),
@@ -174,9 +176,16 @@ async function main() {
   }
 
   const bru = {
-    setVar: (name, value) => { result.vars[name] = value },
+    setVar: (name, value) => {
+      result.vars[name] = value
+      const i = deletedVars.indexOf(name)
+      if (i >= 0) deletedVars.splice(i, 1)
+    },
     getVar: (name) => result.vars[name],
-    deleteVar: (name) => { delete result.vars[name] },
+    deleteVar: (name) => {
+      delete result.vars[name]
+      if (!deletedVars.includes(name)) deletedVars.push(name)
+    },
     setEnvVar: (name, value) => { result.envVars[name] = value; envVarChanges[name] = value },
     getEnvVar: (name) => result.envVars[name],
     deleteEnvVar: (name) => { delete result.envVars[name]; envVarChanges[name] = null },
@@ -293,6 +302,7 @@ async function main() {
 
   result.request = req
   result.envVars = envVarChanges
+  result.deletedVars = deletedVars
   fs.writeFileSync(resultFile, JSON.stringify(result), 'utf8')
 }
 
