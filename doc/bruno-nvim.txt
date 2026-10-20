@@ -49,15 +49,15 @@ Install with lazy.nvim:
   {
     "maybetoolate/bruno-nvim",
     name = "bruno-nvim",
-    ft = { "bruno" },
-    cmd = { "Bruno", "BrunoOpen", "BrunoRun", "BrunoEnv", "BrunoPeek" },
-    -- Load for YAML requests too, so keymaps attach automatically.
-    event = { "BufReadPre *.yml", "BufReadPre *.yaml" },
+    -- Load at startup so YAML request keymaps and :checkhealth work immediately.
+    lazy = false,
     opts = {},
   }
 <
 
-Then run `:Lazy sync`.
+Then run `:Lazy sync`. If you prefer lazy loading, replace `lazy = false`
+with `event = { "BufReadPre *.yml", "BufReadPre *.yaml" }` and open a request
+(or run any `:Bruno*` command) before using `:checkhealth bruno`.
 
 Call |bruno-nvim.setup()| to configure the plugin. All options are optional.
 

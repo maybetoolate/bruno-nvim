@@ -50,16 +50,15 @@ With `lazy.nvim`:
 {
   "maybetoolate/bruno-nvim",
   name = "bruno-nvim",
-  ft = { "bruno" },
-  cmd = { "Bruno", "BrunoOpen", "BrunoRun", "BrunoEnv", "BrunoPeek" },
-  -- Load for YAML requests too, so keymaps attach automatically.
-  event = { "BufReadPre *.yml", "BufReadPre *.yaml" },
+  -- Load at startup so YAML request keymaps and :checkhealth bruno work immediately.
+  lazy = false,
   opts = {},
 }
 ```
 
-Then run `:Lazy sync`. Opening a request or using any `:Bruno*` command loads
-the plugin.
+Then run `:Lazy sync`. If you prefer lazy loading, replace `lazy = false` with
+`event = { "BufReadPre *.yml", "BufReadPre *.yaml" }` and open a request (or
+run any `:Bruno*` command) before using `:checkhealth bruno`.
 
 Or with `vim.pack` / `packadd`, put the repository on `runtimepath` and call:
 
