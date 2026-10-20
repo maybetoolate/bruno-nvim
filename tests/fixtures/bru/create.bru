@@ -1,0 +1,23 @@
+meta {
+  name: Create Legacy
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{host}}/items
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {"name": "legacy", "token": "{{token}}"}
+}
+
+script:post-response {
+  bru.setVar("legacyStatus", res.status);
+}

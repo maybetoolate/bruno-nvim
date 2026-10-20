@@ -1,0 +1,5 @@
+name: Child
+extends: Parent
+variables:
+  - name: own
+    value: from-child

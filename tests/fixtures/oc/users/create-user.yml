@@ -1,0 +1,22 @@
+info:
+  name: Create User
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{host}}/users"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: X-Disabled
+      value: nope
+      disabled: true
+  body:
+    type: json
+    data: |-
+      {"name": "Ada", "token": "{{token}}"}
+  auth: inherit
+
+docs: |-
+  Creates a user.

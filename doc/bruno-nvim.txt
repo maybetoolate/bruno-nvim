@@ -1,0 +1,242 @@
+*bruno-nvim.txt*  Bruno API collections inside Neovim
+
+==============================================================================
+CONTENTS                                                     *bruno-nvim*
+
+  1. Introduction ........................ |bruno-nvim-introduction|
+  2. Requirements ........................ |bruno-nvim-requirements|
+  3. Setup ............................... |bruno-nvim-setup|
+  4. Commands ............................ |bruno-nvim-commands|
+  5. Keymaps ............................. |bruno-nvim-keymaps|
+  6. Variables ........................... |bruno-nvim-variables|
+  7. Scripts ............................. |bruno-nvim-scripts|
+  8. Health .............................. |bruno-nvim-health|
+  9. License ............................. |bruno-nvim-license|
+
+==============================================================================
+1. INTRODUCTION                                     *bruno-nvim-introduction*
+
+bruno-nvim is a Neovim client for Bruno API collections. It reads both Bruno
+2.x OpenCollection YAML and the legacy `.bru` format, sends requests with
+`curl`, and runs collection scripts with `node`.
+
+Features:
+  - Collection sidebar with folders and request methods
+  - Run requests from a buffer or from the sidebar
+  - Response split with status, headers, JSON pretty-printing and test results
+  - Environments, inheritance and variable interpolation
+  - Bearer, basic, API key, digest, NTLM and OAuth2 auth
+  - Pre-request, after-response and test scripts
+  - Response history and per-collection variables
+
+==============================================================================
+2. REQUIREMENTS                                     *bruno-nvim-requirements*
+
+  - Neovim 0.10 or newer
+  - `curl` on `PATH`
+  - `node` on `PATH` for scripts and tests (optional)
+
+No Lua dependencies are required. Pickers use |vim.ui.select|, so a plugin
+such as snacks.nvim that overrides it is used automatically.
+
+==============================================================================
+3. SETUP                                                 *bruno-nvim-setup*
+
+                                                      *bruno-nvim.setup()*
+Call |bruno-nvim.setup()| to configure the plugin. All options are optional.
+
+>lua
+  require("bruno").setup({
+    collection = nil,        -- discover from buffer/cwd when nil
+    env = nil,               -- persisted/default environment when nil
+    keymaps = {
+      run = "<localleader>r",
+      peek = "<localleader>p",
+      env = "<localleader>e",
+      vars = "<localleader>v",
+      history = "<localleader>h",
+      copy_curl = "<localleader>c",
+    },
+    curl = {
+      bin = "curl",
+      insecure = false,
+      timeout = 30000,       -- milliseconds; 0 disables --max-time
+      extra_args = {},
+    },
+    scripts = {
+      enabled = true,
+      node = "node",
+      timeout = 10000,       -- milliseconds
+    },
+    ui = {
+      width = 40,
+      icons = true,
+      winbar = true,
+      response = {
+        position = "below",  -- "below" or "right"
+        size = 0.35,
+        pretty = true,
+        headers = true,
+        focus = false,
+      },
+    },
+    variables = {
+      missing = "keep",      -- "keep", "empty" or "error"
+      persist = true,
+    },
+    history = {
+      enabled = true,
+      size = 50,
+      max_body = 65536,
+    },
+    oauth = { cache = true },
+    picker = "auto",
+  })
+<
+
+Set a keymap to an empty string to disable it.
+
+==============================================================================
+4. COMMANDS                                         *bruno-nvim-commands*
+
+                                                                     *:Bruno*
+:Bruno [path]           Toggle the collection sidebar. `path` may point at a
+                        collection root or any file inside one.
+
+                                                                 *:BrunoOpen*
+:BrunoOpen [path]       Pick a request from the collection.
+
+                                                                  *:BrunoRun*
+:BrunoRun [path]        Send the current request, or the request file at
+                        `path`. Unsaved changes in the current buffer are
+                        used.
+
+                                                                  *:BrunoEnv*
+:BrunoEnv [name]        Select an environment by name, or open the environment
+                        picker when no name is given.
+
+                                                                  *:BrunoVar*
+:BrunoVar               Show resolved variables and their scopes.
+:BrunoVar name=value    Set a local variable (persisted per collection).
+:BrunoVar -u name      Remove a local variable.
+
+                                                                 *:BrunoPeek*
+:BrunoPeek              Preview the resolved request without sending it.
+
+                                                             *:BrunoResponse*
+:BrunoResponse          Reopen the last response for the current request.
+
+                                                              *:BrunoHistory*
+:BrunoHistory           Browse stored responses.
+
+                                                                *:BrunoCurl*
+:BrunoCurl              Copy the current request as a curl command.
+
+                                                               *:BrunoReload*
+:BrunoReload            Reload collections from disk.
+
+                                                               *:BrunoCancel*
+:BrunoCancel            Cancel all in-flight requests.
+
+                                                                 *:BrunoHelp*
+:BrunoHelp              Show the keymap cheatsheet.
+
+==============================================================================
+5. KEYMAPS                                           *bruno-nvim-keymaps*
+
+Request buffers:
+  <localleader>r        Run request
+  <localleader>p        Preview resolved request
+  <localleader>e        Select environment
+  <localleader>v        Show variables
+  <localleader>h        Response history
+  <localleader>c        Copy as curl
+
+Sidebar:
+  <CR>                  Open request or toggle folder
+  o                     Toggle folder
+  R                     Run request under cursor
+  r                     Reload collection
+  e                     Select environment
+  v                     Show variables
+  y                     Copy request as curl
+  ?  g?                 Help
+  q                     Close sidebar
+
+Response window:
+  q                     Close
+  <localleader>p        Toggle pretty-printing
+  <localleader>H        Toggle headers
+  <localleader>y        Copy body
+  <localleader>s        Save body to a file
+
+==============================================================================
+6. VARIABLES                                       *bruno-nvim-variables*
+
+Variables are resolved from highest to lowest priority:
+
+  1. Runtime variables (`bru.setVar`, |:BrunoVar|, script updates)
+  2. Request variables
+  3. Folder variables, nearest folder first
+  4. Active environment
+  5. Collection variables
+  6. Process environment
+
+Unknown variables are kept as `{{name}}` when `variables.missing` is
+`"keep"`. Set it to `"empty"` to replace them with an empty string, or
+`"error"` to make the run fail.
+
+Environment variables marked `secret: true` are shown as `********` in the
+variables panel and are not exposed to scripts. `bru.getSecretVar` reports
+that secrets are unavailable.
+
+OAuth2 access tokens are cached in memory for the current session only.
+
+==============================================================================
+7. SCRIPTS                                           *bruno-nvim-scripts*
+
+Scripts run in a `node` subprocess. The sandbox exposes:
+
+  `bru`        setVar, getVar, deleteVar, setEnvVar, getEnvVar, deleteEnvVar,
+               setCollectionVar, getCollectionVar, setNextRequest,
+               getNextRequest, sleep, getSecretVar, interpolate
+  `req`        url, method, headers, body and setUrl/setMethod/setHeader/
+               getHeader/setBody/getBody/disableHeader
+  `res`        status, statusText, headers, body, responseTime, size, url
+  `expect`     Chai-style assertions
+  `test`       Register a test
+  `console`    log, info, warn, error, debug
+  others       require, process.env, Buffer, URL, URLSearchParams, atob, btoa
+
+Example: >js
+  test("status is 200", function ()
+    expect(res.status).to.equal(200)
+    expect(res.body.id).to.be.a("string")
+  end)
+<
+
+Supported assertions include `.to.equal`, `.to.eql`, `.to.be.above`,
+`.to.be.below`, `.to.be.a`, `.to.include`, `.to.match`, `.to.have.property`,
+`.to.have.keys`, `.to.be.ok`, `.to.be.true`, `.to.be.false`, `.to.be.null`,
+`.to.exist` and `.not`.
+
+WARNING: scripts are not a security sandbox. They run with your user's full
+permissions. Only run collections you trust.
+
+==============================================================================
+8. HEALTH                                             *bruno-nvim-health*
+
+Run |:checkhealth| to verify the Neovim version, `curl`, `node`, and the
+current collection:
+
+>vim
+  :checkhealth bruno
+<
+
+Tests can be run from the repository root with `make test`. Formatting uses
+StyLua with `make fmt` and `make lint`.
+
+==============================================================================
+9. LICENSE                                           *bruno-nvim-license*
+
+MIT

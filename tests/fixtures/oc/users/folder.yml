@@ -1,0 +1,12 @@
+info:
+  name: Users
+  type: folder
+  seq: 1
+
+request:
+  headers:
+    - name: X-Folder
+      value: users
+  auth:
+    type: bearer
+    token: "{{folderToken}}"

@@ -1,0 +1,6 @@
+opencollection: 1.0.0
+info:
+  name: Fixture API
+  version: "1.0.0"
+ignore:
+  - node_modules

@@ -1,0 +1,6 @@
+name: Parent
+variables:
+  - name: inherited
+    value: from-parent
+  - name: host
+    value: http://127.0.0.1:8123

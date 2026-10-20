@@ -1,0 +1,5 @@
+*.log
+.luarc.json
+.luals/
+doc/tags
+tests/.cache/

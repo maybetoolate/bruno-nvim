@@ -1,0 +1,23 @@
+meta {
+  name: Ping
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/ping
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+params:query {
+  q: hello world
+}
+
+docs {
+  Legacy format smoke test.
+}
