@@ -23,7 +23,8 @@ bruno-nvim is a Neovim client for Bruno API collections. It reads both Bruno
 Features:
   - Collection sidebar with folders and request methods
   - Run requests from a buffer or from the sidebar
-  - Response split with status, headers, JSON pretty-printing and test results
+  - Response window that replaces the request window by default, with status,
+    headers, JSON pretty-printing and test results
   - Environments, inheritance and variable interpolation
   - Bearer, basic, API key, digest, NTLM and OAuth2 auth
   - Pre-request, after-response and test scripts
@@ -89,7 +90,7 @@ Call |bruno-nvim.setup()| to configure the plugin. All options are optional.
       icons = true,
       winbar = true,
       response = {
-        position = "below",  -- "below" or "right"
+        position = "replace", -- "replace", "below" or "right"
         size = 0.35,
         pretty = true,
         headers = true,
@@ -179,7 +180,8 @@ Sidebar:
   q                     Close sidebar
 
 Response window:
-  q                     Close
+  <leader>ar        Rerun request
+  q                     Close / restore the request buffer
   <leader>ap        Toggle pretty-printing
   <leader>aH        Toggle headers
   <leader>ay        Copy body

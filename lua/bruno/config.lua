@@ -39,7 +39,8 @@ M.defaults = {
     icons = true,
     winbar = true,
     response = {
-      position = "below", -- "below" | "right"
+      --- "replace" reuses the request file's window; "below"/"right" open a split.
+      position = "replace",
       size = 0.35,
       pretty = true,
       headers = true,

@@ -13,6 +13,8 @@ local S = {
   pretty = true,
   headers = true,
   counter = 0,
+  split = false,
+  previous_buf = nil,
 }
 
 local function valid_win(win)
@@ -232,6 +234,50 @@ local function save_body()
   end)
 end
 
+--- Find the window that currently displays the request at `path`.
+--- @param path string|nil
+--- @return number|nil win
+local function request_window(path)
+  if not path or path == "" then
+    return nil
+  end
+  local target = vim.fs.normalize(vim.fn.fnamemodify(path, ":p"))
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if vim.api.nvim_win_get_config(win).relative == "" then
+      local name = vim.api.nvim_buf_get_name(vim.api.nvim_win_get_buf(win))
+      if name ~= "" and vim.fs.normalize(vim.fn.fnamemodify(name, ":p")) == target then
+        return win
+      end
+    end
+  end
+end
+
+local function request_path(resp, opts)
+  return (opts.req and opts.req.path) or (resp.request and resp.request.path) or ""
+end
+
+local function configure_window(win)
+  vim.wo[win].wrap = true
+  vim.wo[win].number = false
+  vim.wo[win].relativenumber = false
+  vim.wo[win].signcolumn = "no"
+  vim.wo[win].foldcolumn = "0"
+end
+
+local function close_response()
+  if valid_win(S.win) then
+    if S.split or not valid_buf(S.previous_buf) then
+      pcall(vim.api.nvim_win_close, S.win, true)
+    else
+      vim.api.nvim_win_set_buf(S.win, S.previous_buf)
+    end
+  end
+  S.win = nil
+  S.buf = nil
+  S.split = false
+  S.previous_buf = nil
+end
+
 local function keymaps(buf)
   local keys = config.get().keymaps
   local function map(lhs, fn, desc)
@@ -260,14 +306,11 @@ local function keymaps(buf)
   end, "toggle headers")
   map("<leader>ay", copy_body, "copy body")
   map("<leader>as", save_body, "save body")
-  map("q", function()
-    if valid_win(S.win) then
-      vim.api.nvim_win_close(S.win, true)
-    end
-  end, "close")
+  map("q", close_response, "close")
 end
 
---- Show a response in a split.
+--- Show a response. With `ui.response.position = "replace"` (the default) the
+--- request file's window is reused; otherwise a split is opened.
 --- @param resp table
 --- @param opts table|nil { req, coll, focus, from_history }
 function M.show(resp, opts)
@@ -278,31 +321,67 @@ function M.show(resp, opts)
   S.pretty = config.get().ui.response.pretty
   S.headers = config.get().ui.response.headers
 
-  local origin = origin_window()
-  if origin ~= vim.api.nvim_get_current_win() then
-    vim.api.nvim_set_current_win(origin)
+  local position = config.get().ui.response.position
+  local target
+  if position == "replace" then
+    target = request_window(request_path(resp, opts))
+    if not target and valid_win(S.win) and not S.split then
+      -- Keep using the window we already replaced (e.g. `:BrunoResponse`).
+      target = S.win
+    end
   end
 
-  if not (valid_win(S.win) and valid_buf(S.buf)) then
-    S.counter = S.counter + 1
-    local position = config.get().ui.response.position
-    local size = config.get().ui.response.size
-    local buf, win = util.open_split({ position = position, size = size })
-    S.buf = buf
-    S.win = win
-    vim.bo[buf].filetype = filetype_for(resp)
-    vim.wo[win].wrap = true
-    vim.wo[win].number = false
-    vim.wo[win].relativenumber = false
-    vim.wo[win].signcolumn = "no"
-    vim.wo[win].foldcolumn = "0"
-    keymaps(buf)
+  if target then
+    -- Retire a response living in another window before reusing this one.
+    if valid_win(S.win) and S.win ~= target then
+      if S.split then
+        pcall(vim.api.nvim_win_close, S.win, true)
+      elseif valid_buf(S.previous_buf) then
+        vim.api.nvim_win_set_buf(S.win, S.previous_buf)
+      end
+      S.win = nil
+      S.buf = nil
+      S.split = false
+      S.previous_buf = nil
+    end
+
+    local shown = vim.api.nvim_win_get_buf(target)
+    if shown ~= S.buf then
+      S.previous_buf = shown
+    end
+    if not valid_buf(S.buf) then
+      S.buf = util.scratch({})
+      keymaps(S.buf)
+    end
+    S.win = target
+    vim.api.nvim_win_set_buf(target, S.buf)
+    vim.bo[S.buf].filetype = filetype_for(resp)
+    configure_window(target)
+  else
+    local origin = origin_window()
+    if origin ~= vim.api.nvim_get_current_win() then
+      vim.api.nvim_set_current_win(origin)
+    end
+
+    if not (valid_win(S.win) and valid_buf(S.buf)) then
+      S.counter = S.counter + 1
+      local split_position = position == "replace" and "below" or position
+      local buf, win = util.open_split({ position = split_position, size = config.get().ui.response.size })
+      S.buf = buf
+      S.win = win
+      S.split = true
+      S.previous_buf = nil
+      vim.bo[buf].filetype = filetype_for(resp)
+      configure_window(win)
+      keymaps(buf)
+    end
+
+    vim.api.nvim_win_set_buf(S.win, S.buf)
   end
 
-  vim.api.nvim_win_set_buf(S.win, S.buf)
   render()
 
-  if opts.focus or config.get().ui.response.focus then
+  if target or opts.focus or config.get().ui.response.focus then
     vim.api.nvim_set_current_win(S.win)
   end
 end
@@ -319,9 +398,7 @@ function M.open_last(path)
 end
 
 function M.close()
-  if valid_win(S.win) then
-    vim.api.nvim_win_close(S.win, true)
-  end
+  close_response()
 end
 
 function M.current()

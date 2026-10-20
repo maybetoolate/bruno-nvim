@@ -16,9 +16,9 @@ The plugin talks to the network with `curl` and runs collection scripts with
 - **Request editor integration** — open a request file, edit it, and run it with
   your local keymap. Modified buffers are parsed from the buffer, so unsaved
   edits are used.
-- **Response viewer** in a split with status, timing, headers, pretty-printed
-  JSON and test results. Toggle pretty-printing and headers, copy or save the
-  body.
+- **Response viewer** that replaces the request window (or opens a split) with
+  status, timing, headers, pretty-printed JSON and test results. Toggle
+  pretty-printing and headers, copy or save the body.
 - **Environments** with inheritance (`extends`), variable interpolation,
   secret masking, dynamic variables (`{{$guid}}`, `{{$timestamp}}`, ...) and
   `process.env.*`.
@@ -126,9 +126,13 @@ Sidebar:
 
 Response window:
 
+With the default `position = "replace"`, the response takes over the request
+file's window; `q` restores the request buffer.
+
 | Key | Action |
 | --- | --- |
-| `q` | Close |
+| `q` | Close / restore the request buffer |
+| `<leader>ar` | Rerun request |
 | `<leader>ap` | Toggle pretty-print |
 | `<leader>aH` | Toggle headers |
 | `<leader>ay` | Copy body |
@@ -172,7 +176,7 @@ require("bruno").setup({
     icons = true,
     winbar = true,
     response = {
-      position = "below",   -- "below" | "right"
+      position = "replace", -- "replace" | "below" | "right"
       size = 0.35,
       pretty = true,
       headers = true,
